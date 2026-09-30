@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.platforms",
     "apps.streams",
+    "apps.clips",
     "apps.comments",
     "apps.ai",
     "apps.moderation",
@@ -212,6 +213,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.streams.tasks.collect_stream_health",
         "schedule": 10.0,
     },
+    "sweep-expired-clips-daily": {
+        "task": "apps.clips.tasks.sweep_expired_clips",
+        "schedule": 86400.0,
+    },
 }
 
 # ------------------------------------------------------------------ security headers (§30)
@@ -257,6 +262,20 @@ HLS_BASE_URL = env("HLS_BASE_URL", "https://media.local/live")
 MEDIAMTX_API_URL = env("MEDIAMTX_API_URL", "http://ingest:9997")
 FFMPEG_BIN = env("FFMPEG_BIN", "/usr/bin/ffmpeg")
 STREAM_KEY_ROTATION_DAYS = int(env("STREAM_KEY_ROTATION_DAYS", "30"))
+
+# ------------------------------------------------------------------ Clips Studio (docs/IMPROVEMENT_PROPOSAL.md)
+# Rolling DVR recording written by the ingest recorder: {CLIP_DVR_ROOT}/{stream_id}/segment-<epoch>.ts
+CLIP_DVR_ROOT = env("CLIP_DVR_ROOT", str(BASE_DIR / "dvr"))
+CLIP_WORK_ROOT = env("CLIP_WORK_ROOT", str(BASE_DIR / "tmp" / "clips"))
+CLIP_SEGMENT_SECONDS = int(env("CLIP_SEGMENT_SECONDS", "10"))     # recorder segment length
+CLIP_RENDER_TIMEOUT_SECONDS = int(env("CLIP_RENDER_TIMEOUT_SECONDS", "180"))
+CLIP_RETENTION_DAYS = int(env("CLIP_RETENTION_DAYS", "30"))       # §38 data retention
+FFPROBE_BIN = env("FFPROBE_BIN", "/usr/bin/ffprobe")
+# Hype auto-clips (§7 of proposal): opt-in per stream, guarded like AI automation (§12).
+HYPE_CLIP_MIN_COMMENTS_PER_15S = int(env("HYPE_CLIP_MIN_COMMENTS", "20"))
+HYPE_CLIP_BASELINE_MULTIPLIER = float(env("HYPE_CLIP_BASELINE_MULT", "3.0"))
+HYPE_CLIP_COOLDOWN_SECONDS = int(env("HYPE_CLIP_COOLDOWN", "180"))
+HYPE_CLIP_LOOKBACK_SECONDS = int(env("HYPE_CLIP_LOOKBACK", "90"))
 
 # ------------------------------------------------------------------ platform OAuth (§2, §34)
 YOUTUBE_CLIENT_ID = env("YOUTUBE_CLIENT_ID", "")
