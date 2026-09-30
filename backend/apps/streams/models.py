@@ -9,6 +9,13 @@ from django.utils import timezone
 from apps.core.models import TimeStampedModel
 
 VISIBILITY = [("public", "Public"), ("unlisted", "Unlisted"), ("private", "Private")]
+
+
+def default_ingest_stream_id() -> str:
+    """Module-level (serializable) default — lambdas break makemigrations (§33)."""
+    return f"sf{secrets.token_hex(8)}"
+
+
 CATEGORIES = [("just-chatting", "Just Chatting"), ("gaming", "Gaming"), ("music", "Music"),
               ("sports", "Sports"), ("news", "News"), ("education", "Education"),
               ("business", "Business & Finance"), ("food", "Food & Cooking"),
@@ -33,7 +40,7 @@ class Stream(TimeStampedModel):
 
     # ingest credentials for device push (§3): clients stream here, we restream onward
     ingest_stream_id = models.CharField(max_length=64, unique=True, db_index=True,
-                                        default=lambda: f"sf{secrets.token_hex(8)}")
+                                        default=default_ingest_stream_id)
 
     ai_mode = models.CharField(max_length=12, default="approval",
                                choices=[("off", "Off"), ("approval", "Approval mode"),
